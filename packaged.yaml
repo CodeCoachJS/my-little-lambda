@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler/
+      Runtime: nodejs20.x
+      CodeUri: s3://my-sam-app-parsity/8d942a5e12e2d49b041c4e07bf6cd0a7
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello-world
+            Method: get
+    Metadata:
+      SamResourceId: HelloWorldFunction

@@ -1,6 +1,7 @@
 const items = [];
 
 const handler = async (event) => {
+	console.log('Event:', event);
 	const { httpMethod, body, pathParameters } = event;
 	let response;
 

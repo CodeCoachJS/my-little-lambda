@@ -8,8 +8,23 @@ Resources:
             Runtime: nodejs20.x
             CodeUri: ./src
             Events:
-                HelloWorld:
+                GetHelloWorld:
                     Type: Api
                     Properties:
                         Path: /hello-world
                         Method: get
+                PostHelloWorld:
+                    Type: Api
+                    Properties:
+                        Path: /hello-world
+                        Method: post
+                PutHelloWorld:
+                    Type: Api
+                    Properties:
+                        Path: /hello-world/{id}
+                        Method: put
+                DeleteHelloWorld:
+                    Type: Api
+                    Properties:
+                        Path: /hello-world/{id}
+                        Method: delete

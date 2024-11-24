@@ -30,4 +30,10 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   AWS_DEFAULT_REGION: us-east-1
               run: |
-                  sam deploy --template-file packaged.yaml --stack-name my-sam-app --capabilities CAPABILITY_IAM
+                  sam package \
+                    --output-template-file packaged.yaml \
+                    --s3-bucket my-sam-app-parsity 
+                  sam deploy \
+                    --template-file packaged.yaml \
+                    --stack-name my-sam-app \
+                    --capabilities CAPABILITY_IAM

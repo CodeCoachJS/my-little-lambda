@@ -1,63 +1,53 @@
 const { handler } = require('../src/index');
 
-test('GET /items returns all items', async () => {
-	const event = { httpMethod: 'GET' };
-	const result = await handler(event);
-	expect(result.statusCode).toBe(200);
-	expect(result.body).toBe(JSON.stringify([]));
+// Mock AWS SDK
+jest.mock('aws-sdk', () => {
+	const mockPutObject = jest.fn().mockReturnValue({
+		promise: jest.fn(),
+	});
+	return {
+		S3: jest.fn(() => ({
+			putObject: mockPutObject,
+		})),
+	};
 });
 
-test('POST /items creates an item', async () => {
-	const event = {
-		httpMethod: 'POST',
-		body: JSON.stringify({ id: '1', name: 'Test Item' }),
+// Mock Jimp
+jest.mock('jimp', () => {
+	const mockRead = jest.fn().mockResolvedValue({
+		grayscale: jest.fn().mockReturnThis(),
+		getBufferAsync: jest.fn().mockResolvedValue(Buffer.from('mockBuffer')),
+	});
+	return {
+		__esModule: true,
+		read: mockRead,
 	};
-	const result = await handler(event);
-	expect(result.statusCode).toBe(201);
-	expect(result.body).toBe(JSON.stringify({ id: '1', name: 'Test Item' }));
 });
 
-test('GET /items/{id} returns an item', async () => {
-	const postEvent = {
-		httpMethod: 'POST',
-		body: JSON.stringify({ id: '1', name: 'Test Item' }),
-	};
-	await handler(postEvent);
+describe('handler', () => {
+	it('should transform and upload the image', async () => {
+		const event = {
+			body: JSON.stringify({
+				image: '/9j/4AAQSkZJRgABAQEAYABgAAD/4QBoRXhpZgAATU0AKgAAAAgAA1IBAAEAAAABAAAAGgEAAEAAAABAAAAIgESAAMAAAABAAEAAIdpAAQAAAABAAAAJgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAABAAKADAAQAAAABAAABAAoAAAABAAABAAoAABIAAAABAAABAAoAAEgAAAABAAABAAoAAIg',
+			}),
+		};
 
-	const getEvent = { httpMethod: 'GET', pathParameters: { id: '1' } };
-	const result = await handler(getEvent);
-	expect(result.statusCode).toBe(200);
-	expect(result.body).toBe(JSON.stringify({ id: '1', name: 'Test Item' }));
-});
+		// Execute handler
+		const response = await handler(event);
 
-test('PUT /items/{id} updates an item', async () => {
-	const postEvent = {
-		httpMethod: 'POST',
-		body: JSON.stringify({ id: '1', name: 'Test Item' }),
-	};
-	await handler(postEvent);
+		// Mock AWS S3
+		const mockPutObject = require('aws-sdk').S3().putObject;
 
-	const putEvent = {
-		httpMethod: 'PUT',
-		pathParameters: { id: '1' },
-		body: JSON.stringify({ name: 'Updated Item' }),
-	};
-	const result = await handler(putEvent);
-	expect(result.statusCode).toBe(200);
-	expect(result.body).toBe(JSON.stringify({ id: '1', name: 'Updated Item' }));
-});
-
-test('DELETE /items/{id} deletes an item', async () => {
-	const postEvent = {
-		httpMethod: 'POST',
-		body: JSON.stringify({ id: '1', name: 'Test Item' }),
-	};
-	await handler(postEvent);
-
-	const deleteEvent = {
-		httpMethod: 'DELETE',
-		pathParameters: { id: '1' },
-	};
-	const result = await handler(deleteEvent);
-	expect(result.statusCode).toBe(204);
+		// Assertions
+		expect(mockPutObject).toHaveBeenCalledWith({
+			Bucket: 'parsity',
+			Key: 'transformed-image.jpg',
+			Body: expect.any(Buffer),
+			ContentType: 'image/jpeg',
+		});
+		expect(response.statusCode).toBe(200);
+		expect(response.body).toBe(
+			JSON.stringify('Image transformed and uploaded successfully!')
+		);
+	});
 });

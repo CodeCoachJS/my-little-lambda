@@ -5,6 +5,7 @@ const s3 = new AWS.S3();
 
 const handler = async (event) => {
 	const parsedBody = JSON.parse(event.body);
+
 	const bucketName = 'parsity';
 	const fileName = `${parsedBody.fileName}.jpg;`;
 

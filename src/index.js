@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 const Busboy = require('busboy');
-const Jimp = require('jimp');
+const jpeg = require('jpeg-js'); // A lightweight library for encoding/decoding JPEG images
 
 const s3 = new AWS.S3();
 
@@ -12,14 +12,16 @@ const handler = async (event) => {
 		// Parse the incoming multipart form-data
 		const buffer = await parseMultipart(event);
 
-		// Use Jimp to process the image
-		const image = await Jimp.read(buffer);
-		image.grayscale();
+		// Decode the JPEG to get raw pixel data
+		const decodedImage = jpeg.decode(buffer, { useTArray: true });
 
-		// Convert the transformed image to a buffer
-		const transformedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+		// Apply grayscale transformation
+		const grayscaleImage = applyGrayscale(decodedImage);
 
-		// Upload the image to S3
+		// Encode the transformed image back to JPEG
+		const transformedBuffer = jpeg.encode(grayscaleImage, 90).data;
+
+		// Upload the transformed image to S3
 		await s3
 			.putObject({
 				Bucket: bucketName,
@@ -47,6 +49,7 @@ const handler = async (event) => {
 	}
 };
 
+// Function to parse multipart/form-data
 const parseMultipart = async (event) => {
 	return new Promise((resolve, reject) => {
 		const busboy = Busboy({
@@ -80,6 +83,26 @@ const parseMultipart = async (event) => {
 		busboy.write(event.body, event.isBase64Encoded ? 'base64' : 'binary');
 		busboy.end();
 	});
+};
+
+// Function to apply grayscale transformation
+const applyGrayscale = (decodedImage) => {
+	const { data, width, height } = decodedImage;
+
+	// Iterate through every pixel (4 values per pixel: R, G, B, A)
+	for (let i = 0; i < data.length; i += 4) {
+		const r = data[i];
+		const g = data[i + 1];
+		const b = data[i + 2];
+
+		// Calculate grayscale value using the luminosity method
+		const gray = Math.round(0.3 * r + 0.59 * g + 0.11 * b);
+
+		// Set R, G, and B to the grayscale value
+		data[i] = data[i + 1] = data[i + 2] = gray;
+	}
+
+	return { data, width, height };
 };
 
 module.exports = { handler };

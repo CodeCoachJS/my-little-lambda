@@ -49,7 +49,7 @@ const handler = async (event) => {
 
 const parseMultipart = async (event) => {
 	return new Promise((resolve, reject) => {
-		const busboy = new Busboy({
+		const busboy = Busboy({
 			headers: {
 				'content-type':
 					event.headers['content-type'] ||
@@ -59,7 +59,7 @@ const parseMultipart = async (event) => {
 
 		let fileBuffer = null;
 
-		busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+		busboy.on('file', (_, file) => {
 			const chunks = [];
 			file.on('data', (chunk) => {
 				chunks.push(chunk);

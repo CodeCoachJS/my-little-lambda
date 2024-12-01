@@ -56,8 +56,9 @@ const handler = async (event) => {
 
 // Function to parse multipart/form-data
 const parseMultipart = async (event) => {
+	console.log(event);
 	return new Promise((resolve, reject) => {
-		const busboy = new Busboy({
+		const busboy = Busboy({
 			headers: {
 				'content-type':
 					event.headers['content-type'] ||

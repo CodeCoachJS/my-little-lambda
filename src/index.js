@@ -4,13 +4,11 @@ const Jimp = require('jimp');
 const s3 = new AWS.S3();
 
 const handler = async (event) => {
-	const parsedBody = JSON.parse(event.body);
-
 	const bucketName = 'parsity';
-	const fileName = `${parsedBody.fileName}.jpg;`;
+	const fileName = 'transformed-image.jpg';
 
 	try {
-		const base64String = parsedBody.image;
+		const base64String = JSON.parse(event.body).image;
 		const buffer = Buffer.from(base64String, 'base64');
 
 		const image = await Jimp.read(buffer);

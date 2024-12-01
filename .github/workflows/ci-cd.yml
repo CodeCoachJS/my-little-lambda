@@ -19,7 +19,9 @@ jobs:
                   node-version: '20'
 
             - name: Install dependencies
-              run: npm install
+              run: |
+                  cd src
+                  npm install --production
 
             - name: Build application with SAM
               run: sam build
@@ -36,4 +38,7 @@ jobs:
                   sam package \
                     --output-template-file packaged.yaml \
                     --s3-bucket my-sam-app-parsity
-                  sam deploy
+                  sam deploy \
+                    --template-file packaged.yaml \
+                    --stack-name my-sam-app \
+                    --capabilities CAPABILITY_IAM

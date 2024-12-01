@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const { S3Client } = require('@aws-sdk/client-s3');
 const Jimp = require('jimp');
 
 const s3 = new AWS.S3();
@@ -19,14 +19,12 @@ const handler = async (event) => {
 
 		const transformedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
 
-		await s3
-			.putObject({
-				Bucket: bucketName,
-				Key: fileName,
-				Body: transformedBuffer,
-				ContentType: 'image/jpeg',
-			})
-			.promise();
+		await S3Client.putObject({
+			Bucket: bucketName,
+			Key: fileName,
+			Body: transformedBuffer,
+			ContentType: 'image/jpeg',
+		}).promise();
 
 		return {
 			statusCode: 200,

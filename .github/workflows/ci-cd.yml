@@ -36,7 +36,4 @@ jobs:
                   sam package \
                     --output-template-file packaged.yaml \
                     --s3-bucket my-sam-app-parsity
-                  sam deploy \
-                    --template-file packaged.yaml \
-                    --stack-name my-sam-app \
-                    --capabilities CAPABILITY_IAM
+                  sam deploy

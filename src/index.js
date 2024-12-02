@@ -54,17 +54,15 @@ const handler = async (event) => {
 	}
 };
 
-// Function to parse multipart/form-data
 const parseMultipart = async (event) => {
-	console.log(event);
 	return new Promise((resolve, reject) => {
-		const busboy = Busboy({
-			headers: {
-				'content-type':
-					event.headers['content-type'] ||
-					event.headers['Content-Type'],
-			},
-		});
+		const contentType =
+			event.headers['Content-Type'] || event.headers['content-type'];
+		if (!contentType) {
+			return reject(new Error('Content-Type header is missing'));
+		}
+
+		const busboy = Busboy({ headers: { 'content-type': contentType } });
 
 		let fileBuffer = null;
 
@@ -74,10 +72,7 @@ const parseMultipart = async (event) => {
 			}
 
 			const chunks = [];
-			file.on('data', (chunk) => {
-				chunks.push(chunk);
-			});
-
+			file.on('data', (chunk) => chunks.push(chunk));
 			file.on('end', () => {
 				fileBuffer = Buffer.concat(chunks);
 			});
@@ -85,17 +80,13 @@ const parseMultipart = async (event) => {
 
 		busboy.on('finish', () => {
 			if (fileBuffer) {
-				console.log(
-					'File buffer successfully parsed. Length:',
-					fileBuffer.length
-				);
 				resolve(fileBuffer);
 			} else {
 				reject(new Error('No file uploaded.'));
 			}
 		});
 
-		// Decode base64 if necessary
+		// Write the raw body into Busboy
 		const body = event.isBase64Encoded
 			? Buffer.from(event.body, 'base64').toString('binary')
 			: event.body;

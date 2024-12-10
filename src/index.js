@@ -69,14 +69,21 @@ const parseMultipart = async (event) => {
 		let fileBuffer = null;
 
 		busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-			if (fieldname !== 'file') {
-				reject(new Error('Unexpected fieldname. Expected "file".'));
-			}
-
+			console.log(
+				`File received: ${filename}, encoding: ${encoding}, mimetype: ${mimetype}`
+			);
 			const chunks = [];
-			file.on('data', (chunk) => chunks.push(chunk));
+			file.on('data', (chunk) => {
+				console.log('Chunk received:', chunk.toString('hex'));
+				chunks.push(chunk);
+			});
 			file.on('end', () => {
+				console.log('File upload finished');
 				fileBuffer = Buffer.concat(chunks);
+				console.log(
+					'Final buffer (first 10 bytes):',
+					fileBuffer.slice(0, 10).toString('hex')
+				);
 			});
 		});
 

@@ -14,7 +14,9 @@ const handler = async (event) => {
 
 		// Validate JPEG buffer
 		if (fileBuffer[0] !== 0xff || fileBuffer[1] !== 0xd8) {
-			throw new Error('Invalid JPEG file. SOI marker not found.');
+			throw new Error(
+				`Invalid JPEG file. SOI marker not found. ${fileBuffer[0]}`
+			);
 		}
 
 		// Decode the JPEG to get raw pixel data

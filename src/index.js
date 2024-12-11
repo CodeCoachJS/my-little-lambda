@@ -68,22 +68,18 @@ const parseMultipart = async (event) => {
 
 		let fileBuffer = null;
 
-		busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-			console.log(
-				`File received: ${filename}, encoding: ${encoding}, mimetype: ${mimetype}`
-			);
+		busboy.on('file', (fieldname, file, info) => {
+			const { filename, mimeType } = info;
+			console.log(`File received: ${filename}, mimeType: ${mimeType}`);
+
 			const chunks = [];
 			file.on('data', (chunk) => {
-				console.log('Chunk received:', chunk.toString('hex'));
 				chunks.push(chunk);
 			});
 			file.on('end', () => {
 				console.log('File upload finished');
 				fileBuffer = Buffer.concat(chunks);
-				console.log(
-					'Final buffer (first 10 bytes):',
-					fileBuffer.slice(0, 10).toString('hex')
-				);
+				console.log('Buffer size:', fileBuffer.length);
 			});
 		});
 
@@ -95,12 +91,11 @@ const parseMultipart = async (event) => {
 			}
 		});
 
-		// Write the raw body into Busboy
 		const body = event.isBase64Encoded
-			? Buffer.from(event.body, 'base64').toString('binary')
-			: event.body;
+			? Buffer.from(event.body, 'base64')
+			: Buffer.from(event.body, 'utf-8');
 
-		busboy.write(body, 'binary');
+		busboy.write(body);
 		busboy.end();
 	});
 };

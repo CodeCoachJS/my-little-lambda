@@ -12,12 +12,12 @@ const handler = async (event) => {
 		// Parse the incoming multipart form-data
 		const fileBuffer = await parseMultipart(event);
 
-		// Validate JPEG buffer
-		if (fileBuffer[0] !== 0xff || fileBuffer[1] !== 0xd8) {
-			throw new Error(
-				`Invalid JPEG file. SOI marker not found. ${fileBuffer[0]}`
-			);
-		}
+		// // Validate JPEG buffer
+		// if (fileBuffer[0] !== 0xff || fileBuffer[1] !== 0xd8) {
+		// 	throw new Error(
+		// 		`Invalid JPEG file. SOI marker not found. ${fileBuffer[0]}`
+		// 	);
+		// }
 
 		// Decode the JPEG to get raw pixel data
 		const decodedImage = jpeg.decode(fileBuffer, { useTArray: true });

@@ -5,6 +5,7 @@ const jpeg = require('jpeg-js');
 const s3 = new AWS.S3();
 
 const handler = async (event) => {
+	console.log(event);
 	const bucketName = 'parsity';
 	const fileName = 'transformed-image.jpg';
 
@@ -12,12 +13,22 @@ const handler = async (event) => {
 		// Parse the incoming multipart form-data
 		const fileBuffer = await parseMultipart(event);
 
-		// // Validate JPEG buffer
-		// if (fileBuffer[0] !== 0xff || fileBuffer[1] !== 0xd8) {
-		// 	throw new Error(
-		// 		`Invalid JPEG file. SOI marker not found. ${fileBuffer[0]}`
-		// 	);
-		// }
+		// Debug: Log file buffer details
+		console.log('File buffer received:', fileBuffer.slice(0, 10));
+
+		// Validate JPEG buffer
+		if (
+			!fileBuffer ||
+			fileBuffer.length < 2 ||
+			fileBuffer[0] !== 0xff ||
+			fileBuffer[1] !== 0xd8
+		) {
+			console.error(
+				'Invalid JPEG file. Buffer start:',
+				fileBuffer ? fileBuffer.slice(0, 10) : null
+			);
+			throw new Error('Invalid JPEG file. SOI marker not found.');
+		}
 
 		// Decode the JPEG to get raw pixel data
 		const decodedImage = jpeg.decode(fileBuffer, { useTArray: true });
@@ -64,6 +75,14 @@ const parseMultipart = async (event) => {
 			return reject(new Error('Content-Type header is missing'));
 		}
 
+		const boundaryMatch = contentType.match(/boundary=([^\s]+)/);
+		if (!boundaryMatch) {
+			return reject(
+				new Error('Boundary not found in Content-Type header.')
+			);
+		}
+		const boundary = boundaryMatch[1];
+
 		const busboy = Busboy({ headers: { 'content-type': contentType } });
 
 		let fileBuffer = null;
@@ -74,12 +93,13 @@ const parseMultipart = async (event) => {
 
 			const chunks = [];
 			file.on('data', (chunk) => {
+				console.log('Received chunk size:', chunk.length);
 				chunks.push(chunk);
 			});
 			file.on('end', () => {
 				console.log('File upload finished');
 				fileBuffer = Buffer.concat(chunks);
-				console.log('Buffer size:', fileBuffer.length);
+				console.log('Total buffer size:', fileBuffer.length);
 			});
 		});
 
@@ -95,6 +115,7 @@ const parseMultipart = async (event) => {
 			? Buffer.from(event.body, 'base64')
 			: Buffer.from(event.body, 'utf-8');
 
+		console.log('Decoded body size:', body.length);
 		busboy.write(body);
 		busboy.end();
 	});
